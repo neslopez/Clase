@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Vida - Profe Eze</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: white;
+  text-align: center;
+  margin: 0;
+}
+header {
+  padding: 20px;
+  font-size: 2em;
+  font-weight: bold;
+}
+.container { padding: 20px; }
+.card {
+  background: white;
+  color: black;
+  padding: 20px;
+  margin: 20px auto;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 650px;
+}
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #2a5298;
+  color: white;
+}
+.hidden { display: none; }
+img {
+  width: 150px;
+  border-radius: 50%;
+  margin-top: 10px;
+}
+.stats {
+  margin-top: 10px;
+  font-size: 0.9em;
+}
+</style>
+</head>
+<body>
+
+<header>Bienvenidos a la clase del Profe Eze</header>
+
+<div class="container">
+  <div id="stats" class="stats"></div>
+
+  <div id="game" class="card">
+    <h2 id="question"></h2>
+    <div id="options"></div>
+  </div>
+
+  <div id="result" class="card hidden"></div>
+</div>
+
+<script>
+let step = 0;
+let money = 0;
+let happiness = 50;
+let education = 0;
+let experience = 0;
+let stress = 20;
+
+const scenarios = [
+  {
+    q: "Terminaste la secundaria... ¿Qué hacés?",
+    options: [
+      { text: "Buscar trabajo inmediato", money: 400, happiness: -5, experience: 10, next: 1 },
+      { text: "Estudiar una carrera universitaria", money: -200, happiness: 10, education: 20, next: 1 },
+      { text: "Hacer cursos cortos (oficios / programación)", money: 100, happiness: 5, education: 10, next: 1 }
+    ]
+  },
+  {
+    q: "Pasaron 2 años... ¿Cómo seguís?",
+    options: [
+      { text: "Seguir estudiando", money: -300, happiness: 5, education: 20, stress: 10, next: 2 },
+      { text: "Trabajar full time", money: 600, experience: 20, stress: 15, next: 2 },
+      { text: "Estudiar y trabajar", money: 200, education: 10, experience: 10, stress: 20, next: 2 }
+    ]
+  },
+  {
+    q: "Primer sueldo serio... ¿qué hacés con tu dinero?",
+    options: [
+      { text: "Ahorrar", money: 300, stress: -5, next: 3 },
+      { text: "Gastar en gustos", happiness: 15, money: -200, next: 3 },
+      { text: "Invertir (riesgo)", money: 500, stress: 10, next: 3 }
+    ]
+  },
+  {
+    q: "¿Te independizás?",
+    options: [
+      { text: "Sí, alquilar", money: -500, happiness: 15, stress: 10, next: 4 },
+      { text: "Seguir con familia", money: 200, happiness: -5, next: 4 }
+    ]
+  },
+  {
+    q: "Situación laboral...",
+    options: [
+      { text: "Buscar un trabajo mejor", money: 700, stress: 10, next: 5 },
+      { text: "Quedarte donde estás", money: 300, next: 5 },
+      { text: "Emprender", money: 1000, stress: 25, happiness: 10, next: 5 }
+    ]
+  },
+  {
+    q: "Resultado final",
+    end: true
+  }
+];
+
+function updateStats() {
+  document.getElementById("stats").innerHTML = `💰 Dinero: ${money} | 😊 Felicidad: ${happiness} | 🎓 Educación: ${education} | 💼 Experiencia: ${experience} | 😰 Estrés: ${stress}`;
+}
+
+function render() {
+  updateStats();
+
+  const game = document.getElementById("game");
+  const result = document.getElementById("result");
+
+  if (scenarios[step].end) {
+    game.classList.add("hidden");
+    result.classList.remove("hidden");
+
+    let msg = "<h3>Tu resultado:</h3>";
+
+    if (money > 1000) msg += "💰 Lograste estabilidad económica<br>";
+    else msg += "💸 Ingresos limitados<br>";
+
+    if (education > 30) msg += "🎓 Alta formación<br>";
+    else msg += "📚 Baja formación<br>";
+
+    if (happiness > 60) msg += "😊 Buena calidad de vida<br>";
+    else msg += "😐 Calidad de vida media/baja<br>";
+
+    if (stress > 50) msg += "😰 Alto nivel de estrés<br>";
+
+    msg += `<br><strong>Reflexión:</strong><br>`;
+    msg += `Las decisiones que tomaste influyeron directamente en tu presente. No siempre elegir lo más fácil da mejores resultados.`;
+
+    result.innerHTML = msg + "<br><br><button onclick='restart()'>Reintentar</button>";
+    return;
+  }
+
+  const current = scenarios[step];
+  document.getElementById("question").innerText = current.q;
+
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+
+  current.options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.innerText = opt.text;
+    btn.onclick = () => choose(opt);
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function choose(option) {
+  money += option.money || 0;
+  happiness += option.happiness || 0;
+  education += option.education || 0;
+  experience += option.experience || 0;
+  stress += option.stress || 0;
+
+  step = option.next;
+  render();
+}
+
+function restart() {
+  step = 0;
+  money = 0;
+  happiness = 50;
+  education = 0;
+  experience = 0;
+  stress = 20;
+  document.getElementById("game").classList.remove("hidden");
+  document.getElementById("result").classList.add("hidden");
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
+
