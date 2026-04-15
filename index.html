@@ -3,194 +3,144 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador de Vida - Profe Eze</title>
+<title>Simulador Netflix PRO - Profe Eze</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  color: white;
-  text-align: center;
-  margin: 0;
-}
-header {
-  padding: 20px;
-  font-size: 2em;
-  font-weight: bold;
-}
-.container { padding: 20px; }
-.card {
-  background: white;
-  color: black;
-  padding: 20px;
-  margin: 20px auto;
-  border-radius: 15px;
-  width: 90%;
-  max-width: 650px;
-}
-button {
-  padding: 10px 20px;
-  margin: 10px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  background: #2a5298;
-  color: white;
-}
-.hidden { display: none; }
-img {
-  width: 150px;
-  border-radius: 50%;
-  margin-top: 10px;
-}
-.stats {
-  margin-top: 10px;
-  font-size: 0.9em;
-}
+body { margin:0; font-family: Arial; background:#000; color:white; }
+header { text-align:center; padding:15px; font-size:1.8em; font-weight:bold; }
+.container { display:flex; justify-content:center; padding:10px; }
+.card { background:#111; border-radius:20px; max-width:800px; width:95%; padding:20px; box-shadow:0 0 20px rgba(0,0,0,0.8); }
+button { width:100%; margin:8px 0; padding:12px; border:none; border-radius:10px; background:#e50914; color:white; cursor:pointer; font-size:1em; }
+button:hover { background:#b20710; }
+input { width:90%; padding:10px; margin:10px; border-radius:10px; border:none; }
+.stats { font-size:0.9em; margin-bottom:15px; background:#222; padding:10px; border-radius:10px; }
+.progress { height:8px; background:#333; border-radius:10px; margin-bottom:15px; overflow:hidden; }
+.progress-bar { height:100%; background:#e50914; width:0%; }
+.hidden { display:none; }
+.final-box { background:#111; padding:20px; border-radius:20px; text-align:center; }
 </style>
 </head>
 <body>
-
-<header>Bienvenidos a la clase del Profe Eze</header>
+<header>🎬 Bienvenidos a la clase del Profe Eze</header>
 
 <div class="container">
-  <div id="stats" class="stats"></div>
+<div class="card">
 
-  <div id="game" class="card">
-    <h2 id="question"></h2>
-    <div id="options"></div>
-  </div>
+<div id="start">
+<h3>Ingresá tu nombre</h3>
+<input id="nameInput" placeholder="Tu nombre...">
+<h3>Elegí dificultad</h3>
+<button onclick="setLevel('facil')">🟢 Fácil</button>
+<button onclick="setLevel('medio')">🟡 Medio</button>
+<button onclick="setLevel('dificil')">🔴 Difícil</button>
+</div>
 
-  <div id="result" class="card hidden"></div>
+<div id="game" class="hidden">
+<div class="progress"><div id="bar" class="progress-bar"></div></div>
+<div id="stats" class="stats"></div>
+<h2 id="title"></h2>
+<p id="story"></p>
+<div id="options"></div>
+</div>
+
+<div id="end" class="hidden"></div>
+
+</div>
 </div>
 
 <script>
-let step = 0;
-let money = 0;
-let happiness = 50;
-let education = 0;
-let experience = 0;
-let stress = 20;
+let player="";
+let level="facil";
+let mult={facil:1,medio:1.5,dificil:2};
+let step=0;
+let maxSteps=8;
+let S={money:0,happiness:50,education:0,experience:0,stress:20};
+let current="inicio";
 
-const scenarios = [
-  {
-    q: "Terminaste la secundaria... ¿Qué hacés?",
-    options: [
-      { text: "Buscar trabajo inmediato", money: 400, happiness: -5, experience: 10, next: 1 },
-      { text: "Estudiar una carrera universitaria", money: -200, happiness: 10, education: 20, next: 1 },
-      { text: "Hacer cursos cortos (oficios / programación)", money: 100, happiness: 5, education: 10, next: 1 }
-    ]
-  },
-  {
-    q: "Pasaron 2 años... ¿Cómo seguís?",
-    options: [
-      { text: "Seguir estudiando", money: -300, happiness: 5, education: 20, stress: 10, next: 2 },
-      { text: "Trabajar full time", money: 600, experience: 20, stress: 15, next: 2 },
-      { text: "Estudiar y trabajar", money: 200, education: 10, experience: 10, stress: 20, next: 2 }
-    ]
-  },
-  {
-    q: "Primer sueldo serio... ¿qué hacés con tu dinero?",
-    options: [
-      { text: "Ahorrar", money: 300, stress: -5, next: 3 },
-      { text: "Gastar en gustos", happiness: 15, money: -200, next: 3 },
-      { text: "Invertir (riesgo)", money: 500, stress: 10, next: 3 }
-    ]
-  },
-  {
-    q: "¿Te independizás?",
-    options: [
-      { text: "Sí, alquilar", money: -500, happiness: 15, stress: 10, next: 4 },
-      { text: "Seguir con familia", money: 200, happiness: -5, next: 4 }
-    ]
-  },
-  {
-    q: "Situación laboral...",
-    options: [
-      { text: "Buscar un trabajo mejor", money: 700, stress: 10, next: 5 },
-      { text: "Quedarte donde estás", money: 300, next: 5 },
-      { text: "Emprender", money: 1000, stress: 25, happiness: 10, next: 5 }
-    ]
-  },
-  {
-    q: "Resultado final",
-    end: true
-  }
-];
+function format(num){ return "$" + Math.round(num).toLocaleString("es-AR"); }
 
-function updateStats() {
-  document.getElementById("stats").innerHTML = `💰 Dinero: ${money} | 😊 Felicidad: ${happiness} | 🎓 Educación: ${education} | 💼 Experiencia: ${experience} | 😰 Estrés: ${stress}`;
+const scenes={
+ inicio:{t:"Capítulo 1",s:(n)=>`${n}, terminaste la secundaria.`,o:[
+  {txt:"Trabajar",next:"trabajo"},
+  {txt:"Estudiar",next:"universidad"},
+  {txt:"Curso",next:"curso"}
+ ]},
+ trabajo:{t:"Capítulo 2",s:"Primer empleo.",eff:{money:200000},o:[{txt:"Seguir",next:"vida"}]},
+ universidad:{t:"Capítulo 2",s:"Años de estudio.",eff:{education:30,stress:15,money:-150000},o:[{txt:"Recibirte",next:"profesional"}]},
+ profesional:{t:"Capítulo 3",s:"Buen sueldo.",eff:{money:800000},o:[{txt:"Seguir",next:"vida"}]},
+ curso:{t:"Capítulo 2",s:"Aprendés habilidades.",eff:{education:15},o:[{txt:"Trabajar técnico",next:"tecnico"}]},
+ tecnico:{t:"Capítulo 3",s:"Trabajo técnico.",eff:{money:500000},o:[{txt:"Seguir",next:"vida"}]},
+ vida:{t:"Capítulo 4",s:"Decisiones reales.",o:[
+  {txt:"Alquilar",next:"alquiler"},
+  {txt:"Familia",next:"familia"}
+ ]},
+ alquiler:{t:"Capítulo 5",s:"Gastos altos.",eff:{money:-300000},o:[{txt:"Seguir",next:"evento"}]},
+ familia:{t:"Capítulo 5",s:"Menos gastos.",eff:{happiness:5},o:[{txt:"Seguir",next:"evento"}]},
+ evento:{t:"Capítulo 6",s:"La vida cambia...",random:true},
+ inflacion:{t:"Capítulo 7",s:"Inflación.",eff:{money:-200000},o:[{txt:"Seguir",next:"final"}]},
+ crisis:{t:"Capítulo 7",s:"Crisis.",eff:{money:-300000},o:[{txt:"Seguir",next:"final"}]},
+ oportunidad:{t:"Capítulo 7",s:"Oportunidad.",eff:{money:600000},o:[{txt:"Seguir",next:"final"}]},
+ final:{t:"Final",end:true}
+};
+
+function applyEffects(eff){ for(let k in eff){ S[k]+= eff[k]/mult[level]; } }
+
+function updateStats(){
+ document.getElementById("stats").innerHTML=`Nivel: ${level.toUpperCase()} | 💰 ${format(S.money)} | 😊 ${S.happiness} | 🎓 ${S.education} | 😰 ${S.stress}`;
+ document.getElementById("bar").style.width = ((step/maxSteps)*100)+"%";
 }
 
-function render() {
-  updateStats();
+function render(){
+ step++;
+ updateStats();
+ let sc=scenes[current];
 
-  const game = document.getElementById("game");
-  const result = document.getElementById("result");
+ if(sc.random){
+  const r=Math.random();
+  current = r<0.33?"inflacion": r<0.66?"crisis":"oportunidad";
+  sc=scenes[current];
+ }
 
-  if (scenarios[step].end) {
-    game.classList.add("hidden");
-    result.classList.remove("hidden");
+ document.getElementById("title").innerText=sc.t;
+ document.getElementById("story").innerText = typeof sc.s === "function" ? sc.s(player) : sc.s;
 
-    let msg = "<h3>Tu resultado:</h3>";
+ const optDiv=document.getElementById("options");
+ optDiv.innerHTML="";
 
-    if (money > 1000) msg += "💰 Lograste estabilidad económica<br>";
-    else msg += "💸 Ingresos limitados<br>";
+ if(sc.eff) applyEffects(sc.eff);
 
-    if (education > 30) msg += "🎓 Alta formación<br>";
-    else msg += "📚 Baja formación<br>";
+ if(sc.end){
+  document.getElementById("game").classList.add("hidden");
+  const end=document.getElementById("end");
+  end.classList.remove("hidden");
 
-    if (happiness > 60) msg += "😊 Buena calidad de vida<br>";
-    else msg += "😐 Calidad de vida media/baja<br>";
+  end.innerHTML=`<div class="final-box">
+  <h2>🎬 Final de ${player}</h2>
+  <p>Dinero: ${format(S.money)}</p>
+  <p>Educación: ${S.education}</p>
+  <p>Estrés: ${S.stress}</p>
+  <br><b>¿Qué cambiarías?</b>
+  <br><br>
+  <button onclick='restart()'>🔁 Reintentar</button>
+  </div>`;
+  return;
+ }
 
-    if (stress > 50) msg += "😰 Alto nivel de estrés<br>";
-
-    msg += `<br><strong>Reflexión:</strong><br>`;
-    msg += `Las decisiones que tomaste influyeron directamente en tu presente. No siempre elegir lo más fácil da mejores resultados.`;
-
-    result.innerHTML = msg + "<br><br><button onclick='restart()'>Reintentar</button>";
-    return;
-  }
-
-  const current = scenarios[step];
-  document.getElementById("question").innerText = current.q;
-
-  const optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
-
-  current.options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.innerText = opt.text;
-    btn.onclick = () => choose(opt);
-    optionsDiv.appendChild(btn);
-  });
+ sc.o.forEach(o=>{
+  const b=document.createElement("button");
+  b.innerText=o.txt;
+  b.onclick=()=>{ current=o.next; render(); };
+  optDiv.appendChild(b);
+ });
 }
 
-function choose(option) {
-  money += option.money || 0;
-  happiness += option.happiness || 0;
-  education += option.education || 0;
-  experience += option.experience || 0;
-  stress += option.stress || 0;
-
-  step = option.next;
-  render();
+function setLevel(l){ level=l; startGame(); }
+function startGame(){
+ player=document.getElementById("nameInput").value || "Jugador";
+ document.getElementById("start").classList.add("hidden");
+ document.getElementById("game").classList.remove("hidden");
+ render();
 }
-
-function restart() {
-  step = 0;
-  money = 0;
-  happiness = 50;
-  education = 0;
-  experience = 0;
-  stress = 20;
-  document.getElementById("game").classList.remove("hidden");
-  document.getElementById("result").classList.add("hidden");
-  render();
-}
-
-render();
+function restart(){ location.reload(); }
 </script>
-
 </body>
 </html>
-
