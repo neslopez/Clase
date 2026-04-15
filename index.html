@@ -3,144 +3,906 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador Netflix PRO - Profe Eze</title>
+<title>Simulador de Vida – Profe Eze</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-body { margin:0; font-family: Arial; background:#000; color:white; }
-header { text-align:center; padding:15px; font-size:1.8em; font-weight:bold; }
-.container { display:flex; justify-content:center; padding:10px; }
-.card { background:#111; border-radius:20px; max-width:800px; width:95%; padding:20px; box-shadow:0 0 20px rgba(0,0,0,0.8); }
-button { width:100%; margin:8px 0; padding:12px; border:none; border-radius:10px; background:#e50914; color:white; cursor:pointer; font-size:1em; }
-button:hover { background:#b20710; }
-input { width:90%; padding:10px; margin:10px; border-radius:10px; border:none; }
-.stats { font-size:0.9em; margin-bottom:15px; background:#222; padding:10px; border-radius:10px; }
-.progress { height:8px; background:#333; border-radius:10px; margin-bottom:15px; overflow:hidden; }
-.progress-bar { height:100%; background:#e50914; width:0%; }
-.hidden { display:none; }
-.final-box { background:#111; padding:20px; border-radius:20px; text-align:center; }
+:root {
+  --bg: #0d0d0d;
+  --surface: #141414;
+  --surface2: #1e1e1e;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0ede6;
+  --muted: #7a776f;
+  --accent: #e8c87a;
+  --accent2: #c87a7a;
+  --green: #7ac87a;
+  --chapter-color: var(--accent);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.film-grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 180px;
+  opacity: 0.5;
+}
+.wrapper {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 680px;
+  padding: 40px 20px 80px;
+}
+header {
+  text-align: center;
+  margin-bottom: 56px;
+  animation: fadeUp 0.8s ease both;
+}
+.logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2rem, 6vw, 3rem);
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.1;
+}
+.logo span { color: var(--accent); font-style: italic; }
+.subtitle {
+  font-size: 0.82rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+/* Progress */
+.progress-track {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 40px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.progress-track.visible { opacity: 1; }
+.pip {
+  flex: 1; height: 3px; border-radius: 2px;
+  background: var(--border);
+  transition: background 0.4s;
+}
+.pip.done { background: var(--accent); }
+.pip.active { background: rgba(232,200,122,0.4); }
+
+/* Chapter badge */
+.chapter-badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--chapter-color);
+  margin-bottom: 12px;
+  display: block;
+  opacity: 0;
+  animation: fadeUp 0.5s 0.1s ease both;
+}
+/* Scene card */
+.scene-card {
+  animation: fadeUp 0.55s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.scene-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+.scene-body {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #b8b4ad;
+  margin-bottom: 36px;
+  white-space: pre-line;
+}
+.tension {
+  border-left: 2px solid var(--accent2);
+  padding-left: 16px;
+  margin: 20px 0;
+  color: #c4a0a0;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+/* Choices */
+.choices { display: flex; flex-direction: column; gap: 12px; }
+.choice-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 18px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.choice-btn::after {
+  content: '→';
+  position: absolute; right: 20px; top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  color: var(--accent);
+}
+.choice-btn:hover {
+  border-color: rgba(232,200,122,0.35);
+  background: var(--surface2);
+  transform: translateX(3px);
+}
+.choice-btn:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
+.choice-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.stats-bar.visible { opacity: 1; }
+.stat { display: flex; flex-direction: column; gap: 2px; }
+.stat-label { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.stat-value { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+.stat-value.up { color: var(--green); }
+.stat-value.down { color: var(--accent2); }
+
+/* Start screen */
+#start-screen { animation: fadeUp 0.7s ease both; }
+.start-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: block;
+}
+.name-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.1rem;
+  padding: 14px 18px;
+  border-radius: 10px;
+  outline: none;
+  margin-bottom: 32px;
+  transition: border-color 0.2s;
+}
+.name-input:focus { border-color: rgba(232,200,122,0.4); }
+.name-input::placeholder { color: var(--muted); }
+.context-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.context-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.ctx-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+}
+.ctx-card:hover, .ctx-card.selected {
+  border-color: rgba(232,200,122,0.4);
+  background: var(--surface2);
+}
+.ctx-card.selected { border-color: var(--accent); }
+.ctx-icon { font-size: 1.6rem; margin-bottom: 8px; }
+.ctx-name { font-size: 0.9rem; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.ctx-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+.start-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #0d0d0d;
+  border: none;
+  padding: 16px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.start-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.start-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+/* End screen */
+#end-screen { display: none; animation: fadeUp 0.7s ease both; }
+.end-header {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+.end-subhead { color: var(--muted); font-size: 0.95rem; margin-bottom: 36px; }
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.summary-card .label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.summary-card .value { font-size: 1.2rem; font-weight: 500; }
+.reflection-block {
+  background: var(--surface);
+  border: 1px solid rgba(232,200,122,0.25);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 28px;
+}
+.reflection-block h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+  color: var(--accent);
+}
+.reflection-block p {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: #b8b4ad;
+  margin-bottom: 12px;
+}
+.questions-block {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 28px;
+}
+.questions-block h3 {
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.q-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.q-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.4rem;
+  color: var(--accent);
+  line-height: 1;
+  min-width: 24px;
+}
+.q-text { font-size: 0.92rem; line-height: 1.6; color: #b8b4ad; }
+.restart-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 14px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.restart-btn:hover { border-color: var(--border); color: var(--text); }
+.path-trail {
+  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.trail-pill {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.hidden { display: none !important; }
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 36px 0;
+}
 </style>
 </head>
 <body>
-<header>🎬 Bienvenidos a la clase del Profe Eze</header>
+<div class="film-grain"></div>
+<div class="wrapper">
 
-<div class="container">
-<div class="card">
+  <header>
+    <div class="logo">Tu <span>historia</span><br>todavía no terminó</div>
+    <div class="subtitle">Simulador de decisiones · Profe Eze</div>
+  </header>
 
-<div id="start">
-<h3>Ingresá tu nombre</h3>
-<input id="nameInput" placeholder="Tu nombre...">
-<h3>Elegí dificultad</h3>
-<button onclick="setLevel('facil')">🟢 Fácil</button>
-<button onclick="setLevel('medio')">🟡 Medio</button>
-<button onclick="setLevel('dificil')">🔴 Difícil</button>
-</div>
+  <!-- START SCREEN -->
+  <div id="start-screen">
+    <span class="start-label">¿Cómo te llamás?</span>
+    <input class="name-input" id="nameInput" placeholder="Tu nombre..." oninput="checkReady()" autocomplete="off">
 
-<div id="game" class="hidden">
-<div class="progress"><div id="bar" class="progress-bar"></div></div>
-<div id="stats" class="stats"></div>
-<h2 id="title"></h2>
-<p id="story"></p>
-<div id="options"></div>
-</div>
+    <div class="context-title">¿Desde dónde arrancás?</div>
+    <div class="context-cards">
+      <div class="ctx-card" onclick="selectCtx('recursos')" id="ctx-recursos">
+        <div class="ctx-icon">🏠</div>
+        <div class="ctx-name">Con red de apoyo</div>
+        <div class="ctx-desc">Familia que puede ayudarte económicamente si algo sale mal</div>
+      </div>
+      <div class="ctx-card" onclick="selectCtx('ajustado')" id="ctx-ajustado">
+        <div class="ctx-icon">🎒</div>
+        <div class="ctx-name">Sin red de apoyo</div>
+        <div class="ctx-desc">Tenés que bancarla solo o sola desde el primer momento</div>
+      </div>
+    </div>
 
-<div id="end" class="hidden"></div>
+    <button class="start-btn" id="startBtn" onclick="startGame()" disabled>Comenzar mi historia →</button>
+  </div>
 
-</div>
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="hidden">
+    <div class="progress-track" id="progressTrack">
+      <div class="pip" id="pip0"></div>
+      <div class="pip" id="pip1"></div>
+      <div class="pip" id="pip2"></div>
+      <div class="pip" id="pip3"></div>
+      <div class="pip" id="pip4"></div>
+      <div class="pip" id="pip5"></div>
+      <div class="pip" id="pip6"></div>
+    </div>
+    <div class="stats-bar" id="statsBar">
+      <div class="stat"><span class="stat-label">Plata</span><span class="stat-value" id="s-money">$0</span></div>
+      <div class="stat"><span class="stat-label">Bienestar</span><span class="stat-value" id="s-happy">50</span></div>
+      <div class="stat"><span class="stat-label">Formación</span><span class="stat-value" id="s-edu">0</span></div>
+      <div class="stat"><span class="stat-label">Estrés</span><span class="stat-value" id="s-stress">20</span></div>
+    </div>
+    <span class="chapter-badge" id="chapterBadge"></span>
+    <div class="scene-card" id="sceneCard">
+      <div class="scene-title" id="sceneTitle"></div>
+      <div class="scene-body" id="sceneBody"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="end-screen">
+    <div class="end-header" id="endHeader"></div>
+    <div class="end-subhead" id="endSubhead"></div>
+    <div class="path-trail" id="pathTrail"></div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="reflection-block" id="reflectionBlock"></div>
+    <div class="divider"></div>
+    <div class="questions-block">
+      <h3>Preguntas para tu formulario</h3>
+      <div id="reflectionQuestions"></div>
+    </div>
+    <button class="restart-btn" onclick="location.reload()">↺ Jugar de nuevo con otras decisiones</button>
+  </div>
+
 </div>
 
 <script>
-let player="";
-let level="facil";
-let mult={facil:1,medio:1.5,dificil:2};
-let step=0;
-let maxSteps=8;
-let S={money:0,happiness:50,education:0,experience:0,stress:20};
-let current="inicio";
+let player = "";
+let ctx = "";
+let step = 0;
+const TOTAL_STEPS = 7;
+let S = { money: 0, happiness: 50, education: 0, stress: 20 };
+let pathLog = [];
 
-function format(num){ return "$" + Math.round(num).toLocaleString("es-AR"); }
-
-const scenes={
- inicio:{t:"Capítulo 1",s:(n)=>`${n}, terminaste la secundaria.`,o:[
-  {txt:"Trabajar",next:"trabajo"},
-  {txt:"Estudiar",next:"universidad"},
-  {txt:"Curso",next:"curso"}
- ]},
- trabajo:{t:"Capítulo 2",s:"Primer empleo.",eff:{money:200000},o:[{txt:"Seguir",next:"vida"}]},
- universidad:{t:"Capítulo 2",s:"Años de estudio.",eff:{education:30,stress:15,money:-150000},o:[{txt:"Recibirte",next:"profesional"}]},
- profesional:{t:"Capítulo 3",s:"Buen sueldo.",eff:{money:800000},o:[{txt:"Seguir",next:"vida"}]},
- curso:{t:"Capítulo 2",s:"Aprendés habilidades.",eff:{education:15},o:[{txt:"Trabajar técnico",next:"tecnico"}]},
- tecnico:{t:"Capítulo 3",s:"Trabajo técnico.",eff:{money:500000},o:[{txt:"Seguir",next:"vida"}]},
- vida:{t:"Capítulo 4",s:"Decisiones reales.",o:[
-  {txt:"Alquilar",next:"alquiler"},
-  {txt:"Familia",next:"familia"}
- ]},
- alquiler:{t:"Capítulo 5",s:"Gastos altos.",eff:{money:-300000},o:[{txt:"Seguir",next:"evento"}]},
- familia:{t:"Capítulo 5",s:"Menos gastos.",eff:{happiness:5},o:[{txt:"Seguir",next:"evento"}]},
- evento:{t:"Capítulo 6",s:"La vida cambia...",random:true},
- inflacion:{t:"Capítulo 7",s:"Inflación.",eff:{money:-200000},o:[{txt:"Seguir",next:"final"}]},
- crisis:{t:"Capítulo 7",s:"Crisis.",eff:{money:-300000},o:[{txt:"Seguir",next:"final"}]},
- oportunidad:{t:"Capítulo 7",s:"Oportunidad.",eff:{money:600000},o:[{txt:"Seguir",next:"final"}]},
- final:{t:"Final",end:true}
+const ctxConfig = {
+  recursos: { moneyBonus: 150000, stressReduction: 10, label: "Con red de apoyo" },
+  ajustado: { moneyBonus: 0, stressReduction: 0, label: "Sin red de apoyo" }
 };
 
-function applyEffects(eff){ for(let k in eff){ S[k]+= eff[k]/mult[level]; } }
+function fmt(n) { return "$" + Math.round(Math.abs(n)).toLocaleString("es-AR"); }
 
-function updateStats(){
- document.getElementById("stats").innerHTML=`Nivel: ${level.toUpperCase()} | 💰 ${format(S.money)} | 😊 ${S.happiness} | 🎓 ${S.education} | 😰 ${S.stress}`;
- document.getElementById("bar").style.width = ((step/maxSteps)*100)+"%";
+function selectCtx(id) {
+  ctx = id;
+  document.querySelectorAll('.ctx-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('ctx-' + id).classList.add('selected');
+  checkReady();
+}
+function checkReady() {
+  const name = document.getElementById('nameInput').value.trim();
+  document.getElementById('startBtn').disabled = !(name && ctx);
 }
 
-function render(){
- step++;
- updateStats();
- let sc=scenes[current];
+// ── SCENE TREE ───────────────────────────────────────────────────────────────
+// Each scene: { chapter, title, body, tension?, choices: [{label, text, next, eff}], end? }
 
- if(sc.random){
-  const r=Math.random();
-  current = r<0.33?"inflacion": r<0.66?"crisis":"oportunidad";
-  sc=scenes[current];
- }
+const scenes = {
 
- document.getElementById("title").innerText=sc.t;
- document.getElementById("story").innerText = typeof sc.s === "function" ? sc.s(player) : sc.s;
+  // CAPÍTULO 1 ─ La bifurcación inicial
+  inicio: {
+    chapter: "Capítulo 1 · El momento de elegir",
+    title: (n) => `${n}, terminaste la secundaria.`,
+    body: `Es diciembre. Todos los de tu año están hablando de qué van a hacer el año que viene. Algunos ya saben. Otros actúan como si supieran.\n\nVos todavía no estás seguro/a.`,
+    tension: "La presión de tener que decidir antes de estar listo/a es real.",
+    choices: [
+      { label: "Camino A", text: "Empezar a trabajar para ganar experiencia e independencia", next: "trabajo_temprano", eff: { money: 180000, stress: 8 } },
+      { label: "Camino B", text: "Inscribirte en la universidad o terciario", next: "universidad_inicio", eff: { education: 20, stress: 12, money: -60000 } },
+      { label: "Camino C", text: "Hacer un curso técnico o capacitación corta", next: "curso_tecnico", eff: { education: 12, money: -20000 } }
+    ]
+  },
 
- const optDiv=document.getElementById("options");
- optDiv.innerHTML="";
+  // ─── RAMA TRABAJO ──────────────────────────────────────────────────────────
+  trabajo_temprano: {
+    chapter: "Capítulo 2 · El mundo laboral",
+    title: "El primer laburo no es lo que esperabas.",
+    body: `Conseguiste trabajo en un local de ropa. Ocho horas parado/a, poco sueldo, y tu jefe no recuerda tu nombre bien. Pero es plata en mano.\n\nDespués de tres meses, un amigo te dice que en la empresa donde él trabaja necesitan a alguien para tareas administrativas. Más sueldo, pero requiere que sepas Excel.`,
+    tension: "No sabés Excel. Tenés una semana para decidir si intentás aprender mientras hacés el proceso de selección.",
+    choices: [
+      { label: "Arriesgar", text: "Aplicar al trabajo nuevo y aprender en el camino", next: "trabajo_salto", eff: { money: 120000, stress: 15, education: 8 } },
+      { label: "Mantener", text: "Quedarte donde estás hasta tener más seguridad", next: "trabajo_estable", eff: { money: 60000, stress: -5, happiness: -8 } }
+    ]
+  },
 
- if(sc.eff) applyEffects(sc.eff);
+  trabajo_salto: {
+    chapter: "Capítulo 3 · Adaptarse",
+    title: "Lo conseguiste. Y costó.",
+    body: `Pasaste las noches viendo tutoriales. El primer mes fue un caos. Pero lo lograste.\n\nAhora ganás más, pero notás algo: tus compañeros con título tienen posibilidades de ascenso que vos no tenés. Tu jefa te lo dijo directamente: "Para el puesto de coordinador necesitamos formación universitaria."`,
+    tension: "El trabajo te da dinero ahora. La formación te daría opciones después. Pero hacer las dos cosas a la vez es agotador.",
+    choices: [
+      { label: "Las dos cosas", text: "Inscribirte en un nocturno y mantener el trabajo", next: "doble_esfuerzo", eff: { education: 25, stress: 25, happiness: -10 } },
+      { label: "Solo trabajo", text: "Enfocarte en ascender donde estás, sin estudios formales", next: "ascenso_laboral", eff: { money: 200000, happiness: 5 } }
+    ]
+  },
 
- if(sc.end){
-  document.getElementById("game").classList.add("hidden");
-  const end=document.getElementById("end");
-  end.classList.remove("hidden");
+  trabajo_estable: {
+    chapter: "Capítulo 3 · La rutina",
+    title: "La seguridad tiene un precio.",
+    body: `Pasaron dos años. Seguís en el mismo trabajo. Te aumentaron una vez. El ambiente es bueno.\n\nPero hay noches en que pensás: ¿esto es lo que querías? Tus amigos que fueron a la universidad ya están terminando. Algunos ya trabajan de lo que estudiaron.`,
+    tension: "La comparación con otros puede ser veneno. Pero también puede ser información.",
+    choices: [
+      { label: "Retomar estudios", text: "Inscribirte en algo que te interese aunque sea tarde", next: "vuelta_estudios", eff: { education: 20, stress: 18, money: -40000 } },
+      { label: "Profundizar", text: "Apostar a especializarte en tu trabajo actual", next: "ascenso_laboral", eff: { money: 150000, happiness: 8 } }
+    ]
+  },
 
-  end.innerHTML=`<div class="final-box">
-  <h2>🎬 Final de ${player}</h2>
-  <p>Dinero: ${format(S.money)}</p>
-  <p>Educación: ${S.education}</p>
-  <p>Estrés: ${S.stress}</p>
-  <br><b>¿Qué cambiarías?</b>
-  <br><br>
-  <button onclick='restart()'>🔁 Reintentar</button>
-  </div>`;
-  return;
- }
+  // ─── RAMA UNIVERSIDAD ─────────────────────────────────────────────────────
+  universidad_inicio: {
+    chapter: "Capítulo 2 · La vida universitaria",
+    title: "Nadie te preparó para esto.",
+    body: `El primer año es una mezcla rara: libertad que antes no tenías y responsabilidad que nadie te enseñó a manejar.\n\nMaterias difíciles, profesores que hablan para el frente, compañeros que parecen entender todo. Vos faltaste a dos parciales porque no sabías que "libre" significaba que nadie te llama.`,
+    tension: "En la secundaria había alguien que te sostenía. Acá, sos vos solo/a.",
+    choices: [
+      { label: "Reorganizarse", text: "Buscar un grupo de estudio y cambiar la metodología", next: "uni_organizada", eff: { education: 30, happiness: 10, stress: -8 } },
+      { label: "Cambiar carrera", text: "Lo que elegiste no era lo que esperabas. Cambiar.", next: "cambio_carrera", eff: { education: 10, stress: 20, money: -30000 } }
+    ]
+  },
 
- sc.o.forEach(o=>{
-  const b=document.createElement("button");
-  b.innerText=o.txt;
-  b.onclick=()=>{ current=o.next; render(); };
-  optDiv.appendChild(b);
- });
+  uni_organizada: {
+    chapter: "Capítulo 3 · El camino largo",
+    title: "Encontraste tu ritmo.",
+    body: `Cuarto año. Ya sabés cómo estudiar, tenés amigos, y empezás a ver para qué sirve lo que estudiás.\n\nPero el dinero es un problema real. Tu familia no puede seguir ayudando como antes. Necesitás trabajar, pero trabajar te quita tiempo de estudio.`,
+    tension: "Esta es la tensión que nadie te dice cuando elegís estudiar: el tiempo no alcanza.",
+    choices: [
+      { label: "Trabajar part-time", text: "Trabajar medio turno aunque atrase la carrera", next: "uni_trabajo", eff: { money: 120000, stress: 18, education: -5 } },
+      { label: "Beca o préstamo", text: "Buscar financiamiento para no cortar el ritmo", next: "uni_beca", eff: { education: 10, stress: 8, money: -20000 } }
+    ]
+  },
+
+  cambio_carrera: {
+    chapter: "Capítulo 3 · Volver a empezar",
+    title: "Cambiar no es fracasar.",
+    body: `Empezaste algo nuevo. Te costó admitirlo porque sentiste que "perdiste" un año.\n\nPero en la nueva carrera algo hace clic. Llegás a clase con ganas. Eso no lo tenías antes.`,
+    tension: "Perdiste tiempo según algunos. Ganaste dirección según vos. ¿Quién tiene razón?",
+    choices: [
+      { label: "Seguir", text: "Terminar lo que empezaste", next: "uni_trabajo", eff: { education: 25, happiness: 15 } }
+    ]
+  },
+
+  // ─── RAMA CURSO TÉCNICO ───────────────────────────────────────────────────
+  curso_tecnico: {
+    chapter: "Capítulo 2 · La formación práctica",
+    title: "Seis meses que cambian mucho.",
+    body: `Hiciste un curso de diseño gráfico / programación / electricidad (elegiste vos). Al terminar tenés un portfolio básico pero real.\n\nTe llegó una propuesta: trabajo freelance para una empresa pequeña. Pagan poco, pero es tu primer cliente.`,
+    tension: "El primer trabajo en tu área siempre parece poco. Pero es el que te abre la puerta.",
+    choices: [
+      { label: "Aceptar", text: "Tomar el trabajo y construir experiencia", next: "freelance_inicio", eff: { money: 80000, experience: 20, happiness: 12 } },
+      { label: "Esperar", text: "Esperar una oferta mejor antes de arrancar", next: "espera_oferta", eff: { stress: 15, money: -30000 } }
+    ]
+  },
+
+  freelance_inicio: {
+    chapter: "Capítulo 3 · Construyendo algo propio",
+    title: "El trabajo independiente tiene otra cara.",
+    body: `Un cliente se fue sin pagar. Otro te pidió cambios indefinidos por el mismo precio. Pero también tuviste proyectos que te hicieron sentir orgulloso/a.\n\nDespués de un año, tenés que elegir si seguir como independiente o buscar relación de dependencia.`,
+    tension: "Libertad vs. estabilidad. No hay respuesta correcta, hay contextos diferentes.",
+    choices: [
+      { label: "Independencia", text: "Seguir creciendo como freelance", next: "freelance_crecimiento", eff: { money: 250000, stress: 20, happiness: 10 } },
+      { label: "Estabilidad", text: "Entrar a una empresa con sueldo fijo", next: "trabajo_empresa", eff: { money: 200000, stress: -10, happiness: 5 } }
+    ]
+  },
+
+  espera_oferta: {
+    chapter: "Capítulo 3 · La espera",
+    title: "Las oportunidades no esperan.",
+    body: `Pasaron seis meses. La oferta mejor no llegó. El dinero se fue acabando y la ansiedad creció.\n\nAhora el mismo trabajo que rechazaste antes ya no está disponible. Pero aparece otro, similar.`,
+    choices: [
+      { label: "Aceptar ahora", text: "Tomar lo que hay y empezar a construir", next: "trabajo_empresa", eff: { money: 160000, stress: -5 } }
+    ]
+  },
+
+  // ─── NODOS CONVERGENTES ───────────────────────────────────────────────────
+  doble_esfuerzo: {
+    chapter: "Capítulo 4 · El límite",
+    title: "Trabajar y estudiar a la vez es heroico. Y destructivo.",
+    body: `Dormís poco. Los fines de semana los dedicás a ponerte al día. Tus amigos no te ven. Tu cuerpo acusa recibo.\n\nPero avanzás. Lento, pero avanzás.`,
+    tension: "El sacrificio a corto plazo puede ser inversión o puede ser daño. Depende de cuánto tiempo dure.",
+    choices: [
+      { label: "Continuar", text: "Sostenerlo hasta recibirse", next: "recibido", eff: { education: 35, stress: 30, happiness: -15 } },
+      { label: "Pausar", text: "Tomar un respiro aunque demore más", next: "pausa_reflexion", eff: { stress: -20, happiness: 15, education: -10 } }
+    ]
+  },
+
+  ascenso_laboral: {
+    chapter: "Capítulo 4 · Crecer desde adentro",
+    title: "Te conocen, te valoran.",
+    body: `Los años de experiencia pesan. Te dieron un puesto de mayor responsabilidad.\n\nTenés ingresos buenos, autonomía, y un rol que construiste vos mismo/a. Lo que no tenés es un título si mañana tenés que salir al mercado de nuevo.`,
+    choices: [
+      { label: "Seguir", text: "Consolidar lo que tenés", next: "evento_vida", eff: { money: 300000, happiness: 10 } }
+    ]
+  },
+
+  uni_trabajo: {
+    chapter: "Capítulo 4 · Equilibrio imposible",
+    title: "Hacés malabares.",
+    body: `Trabajás y estudiás. Los dos sufren un poco. Pero los dos avanzan.\n\nEmpezás a ver la línea de llegada de la carrera.`,
+    choices: [
+      { label: "Terminar", text: "Empujar hasta recibirse", next: "recibido", eff: { education: 40, stress: 20, money: 80000 } }
+    ]
+  },
+
+  uni_beca: {
+    chapter: "Capítulo 4 · Apoyo externo",
+    title: "La beca cambió todo.",
+    body: `Conseguiste financiamiento. Pudiste concentrarte en estudiar. Terminaste en tiempo.\n\nAhora tenés título y poca experiencia laboral. Eso también es una variable.`,
+    choices: [
+      { label: "Salir al mercado", text: "Buscar trabajo con el título recién obtenido", next: "recibido", eff: { education: 45, money: 50000, stress: 15 } }
+    ]
+  },
+
+  vuelta_estudios: {
+    chapter: "Capítulo 4 · Nunca es tarde",
+    title: "Volviste.",
+    body: `Estudiar de adulto es diferente. Llegás con preguntas que los recién egresados del secundario no tienen todavía.\n\nEso te hace mejor estudiante. Y peor estudiante. Dependiendo del día.`,
+    choices: [
+      { label: "Seguir", text: "Terminar lo que empezaste", next: "recibido", eff: { education: 30, stress: 15, happiness: 20 } }
+    ]
+  },
+
+  freelance_crecimiento: {
+    chapter: "Capítulo 4 · Tu propia empresa",
+    title: "Dos clientes se convirtieron en diez.",
+    body: `Tu trabajo habla por sí solo. Pero no tenés estructura, no sabés de impuestos, y cada vez que conseguís un cliente grande te preguntás si podés cumplir.`,
+    tension: "El crecimiento sin estructura puede romperse en el momento menos esperado.",
+    choices: [
+      { label: "Formalizar", text: "Registrar la actividad y organizarte legalmente", next: "evento_vida", eff: { money: 350000, stress: 15 } },
+      { label: "Seguir informal", text: "Crecer sin burocracia por ahora", next: "evento_vida", eff: { money: 400000, stress: 5 } }
+    ]
+  },
+
+  trabajo_empresa: {
+    chapter: "Capítulo 4 · La empresa",
+    title: "Sueldo fijo, jefe nuevo.",
+    body: `La estructura empresarial tiene sus reglas. No siempre te dan razón aunque tengas razón. Pero no tenés que preocuparte por pagar el alquiler el primero de cada mes.`,
+    choices: [
+      { label: "Adaptarte", text: "Aprender a navegar la estructura", next: "evento_vida", eff: { money: 280000, stress: 10, happiness: -5 } }
+    ]
+  },
+
+  pausa_reflexion: {
+    chapter: "Capítulo 4 · El espacio para pensar",
+    title: "Paraste. Y fue lo más difícil.",
+    body: `En el silencio de no estar corriendo encontraste algo: claridad sobre lo que querés.\n\nEso no tiene precio. Pero sí tiene costo.`,
+    choices: [
+      { label: "Retomar", text: "Volver con más claridad", next: "evento_vida", eff: { happiness: 25, stress: -15, money: -50000 } }
+    ]
+  },
+
+  recibido: {
+    chapter: "Capítulo 5 · El título en la mano",
+    title: "Llegaste.",
+    body: `El papel dice que sabés. El mercado va a verificarlo.\n\nLos primeros trabajos relacionados con tu carrera son decepcionantes en cuanto a sueldo. Pero estás en la puerta.`,
+    choices: [
+      { label: "Continuar", text: "Seguir construyendo desde acá", next: "evento_vida", eff: { education: 10, money: 150000, happiness: 10 } }
+    ]
+  },
+
+  // ─── EVENTO ALEATORIO ─────────────────────────────────────────────────────
+  evento_vida: {
+    chapter: "Capítulo 5 · La vida interrumpe",
+    title: "Algo que no planeaste.",
+    body: `La vida tiene la costumbre de no pedir permiso.`,
+    random: true
+  },
+
+  evento_inflacion: {
+    chapter: "Capítulo 5 · El contexto",
+    title: "La inflación se comió tus ahorros.",
+    body: `No fue una decisión tuya. Fue el contexto. Pero igual te afecta.\n\nLo que guardaste durante dos años alcanza ahora para la mitad de lo que alcanzaba.`,
+    tension: "El esfuerzo personal no siempre es suficiente cuando el sistema falla. Eso es real, y es justo nombrarlo.",
+    choices: [
+      { label: "Adaptarse", text: "Revisar gastos y buscar alternativas", next: "final", eff: { money: -200000, stress: 20 } }
+    ]
+  },
+
+  evento_crisis_salud: {
+    chapter: "Capítulo 5 · Lo que más importa",
+    title: "Alguien de tu familia se enfermó.",
+    body: `Hubo semanas en que no podías concentrarte en nada más. El trabajo esperó. Los estudios esperaron. Vos estuviste donde tenías que estar.\n\nEso tiene un costo económico. Y un valor que no se mide en plata.`,
+    tension: "¿Cómo se prepara una persona para lo que no puede predecir?",
+    choices: [
+      { label: "Seguir", text: "Retomar cuando se pudo", next: "final", eff: { money: -150000, stress: 25, happiness: -10 } }
+    ]
+  },
+
+  evento_oportunidad: {
+    chapter: "Capítulo 5 · La puerta inesperada",
+    title: "Una oportunidad que no buscabas.",
+    body: `Te llegó una propuesta que no esperabas. Un contacto, un proyecto, un llamado.\n\nNo era perfecto. Pero era real. Y llegó justo cuando lo necesitabas.`,
+    choices: [
+      { label: "Aprovecharla", text: "Decir que sí, aunque dé un poco de miedo", next: "final", eff: { money: 300000, happiness: 15, stress: 5 } }
+    ]
+  },
+
+  evento_mudanza: {
+    chapter: "Capítulo 5 · Independencia",
+    title: "Te fuiste de tu casa.",
+    body: `Alquilar solo/a o con compañeros/as. La libertad de cocinar lo que querés y la responsabilidad de pagar el gas.\n\nNadie te había dicho bien cuánto cuestan las cosas.`,
+    tension: "La independencia se aprende haciéndola. No tiene atajos.",
+    choices: [
+      { label: "Adaptarse", text: "Aprender a administrar de verdad", next: "final", eff: { money: -120000, happiness: 18, education: 5 } }
+    ]
+  },
+
+  // ─── FINAL ────────────────────────────────────────────────────────────────
+  final: {
+    chapter: "Capítulo 6 · Por ahora",
+    end: true
+  }
+};
+
+// ── GAME STATE ───────────────────────────────────────────────────────────────
+let currentScene = "inicio";
+const randomEvents = ["evento_inflacion", "evento_crisis_salud", "evento_oportunidad", "evento_mudanza"];
+
+function startGame() {
+  player = document.getElementById("nameInput").value.trim() || "Jugador";
+  const cfg = ctxConfig[ctx];
+  S.money += cfg.moneyBonus;
+  S.stress -= cfg.stressReduction;
+
+  document.getElementById("start-screen").classList.add("hidden");
+  const gs = document.getElementById("game-screen");
+  gs.classList.remove("hidden");
+  document.getElementById("progressTrack").classList.add("visible");
+  document.getElementById("statsBar").classList.add("visible");
+
+  renderScene();
 }
 
-function setLevel(l){ level=l; startGame(); }
-function startGame(){
- player=document.getElementById("nameInput").value || "Jugador";
- document.getElementById("start").classList.add("hidden");
- document.getElementById("game").classList.remove("hidden");
- render();
+function applyEff(eff) {
+  if (!eff) return;
+  for (const k in eff) {
+    if (k === 'experience') S.education += eff[k];
+    else if (S[k] !== undefined) S[k] += eff[k];
+  }
 }
-function restart(){ location.reload(); }
+
+function updateStats(prevS) {
+  const fmt2 = (n) => "$" + Math.round(Math.abs(n)).toLocaleString("es-AR");
+  const el = (id, val, prev) => {
+    const el = document.getElementById(id);
+    el.textContent = id === 's-money' ? fmt2(val) : Math.round(val);
+    el.className = 'stat-value' + (val > prev ? ' up' : val < prev ? ' down' : '');
+  };
+  el('s-money', S.money, prevS.money);
+  el('s-happy', S.happiness, prevS.happiness);
+  el('s-edu', S.education, prevS.education);
+  el('s-stress', S.stress, prevS.stress);
+  updatePips();
+}
+
+function updatePips() {
+  for (let i = 0; i < TOTAL_STEPS; i++) {
+    const pip = document.getElementById('pip' + i);
+    if (i < step) pip.className = 'pip done';
+    else if (i === step) pip.className = 'pip active';
+    else pip.className = 'pip';
+  }
+}
+
+function renderScene() {
+  let sc = scenes[currentScene];
+  if (!sc) return;
+
+  if (sc.random) {
+    const pick = randomEvents[Math.floor(Math.random() * randomEvents.length)];
+    currentScene = pick;
+    sc = scenes[currentScene];
+  }
+
+  if (sc.end) { showEnd(); return; }
+
+  step++;
+  const prevS = { ...S };
+
+  document.getElementById("chapterBadge").textContent = sc.chapter;
+  document.getElementById("sceneTitle").textContent =
+    typeof sc.title === 'function' ? sc.title(player) : sc.title;
+
+  let body = sc.body || "";
+  if (sc.tension) body += `\n\n"${sc.tension}"`;
+  document.getElementById("sceneBody").textContent = body;
+
+  const choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+
+  sc.choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+    btn.innerHTML = `<span class="choice-label">${choice.label}</span>${choice.text}`;
+    btn.onclick = () => {
+      pathLog.push({ label: choice.label, text: choice.text });
+      applyEff(choice.eff);
+      updateStats(prevS);
+      currentScene = choice.next;
+      // re-animate
+      const card = document.getElementById("sceneCard");
+      card.style.animation = 'none';
+      card.offsetHeight;
+      card.style.animation = '';
+      document.getElementById("chapterBadge").style.animation = 'none';
+      document.getElementById("chapterBadge").offsetHeight;
+      document.getElementById("chapterBadge").style.animation = '';
+      renderScene();
+    };
+    choicesDiv.appendChild(btn);
+  });
+
+  updatePips();
+}
+
+function showEnd() {
+  document.getElementById("game-screen").classList.add("hidden");
+  const endEl = document.getElementById("end-screen");
+  endEl.style.display = "block";
+
+  const cfg = ctxConfig[ctx];
+
+  // Header
+  document.getElementById("endHeader").textContent = `${player}, así quedó tu historia... por ahora.`;
+  document.getElementById("endSubhead").textContent =
+    `Punto de partida: ${cfg.label}. ${step} capítulos, decisiones reales.`;
+
+  // Path trail
+  const trail = document.getElementById("pathTrail");
+  pathLog.forEach(p => {
+    const pill = document.createElement("span");
+    pill.className = "trail-pill";
+    pill.textContent = p.text.length > 40 ? p.text.slice(0, 40) + "…" : p.text;
+    trail.appendChild(pill);
+  });
+
+  // Summary cards
+  const grid = document.getElementById("summaryGrid");
+  const cards = [
+    { label: "Dinero acumulado", value: fmt(S.money), color: S.money > 200000 ? "#7ac87a" : S.money > 0 ? "#e8c87a" : "#c87a7a" },
+    { label: "Bienestar", value: Math.round(S.happiness) + " / 100", color: S.happiness > 55 ? "#7ac87a" : S.happiness > 35 ? "#e8c87a" : "#c87a7a" },
+    { label: "Formación", value: Math.round(S.education) + " puntos", color: "#b8b4ad" },
+    { label: "Nivel de estrés", value: Math.round(S.stress) + " / 100", color: S.stress > 60 ? "#c87a7a" : S.stress > 35 ? "#e8c87a" : "#7ac87a" }
+  ];
+  cards.forEach(c => {
+    grid.innerHTML += `<div class="summary-card"><div class="label">${c.label}</div><div class="value" style="color:${c.color}">${c.value}</div></div>`;
+  });
+
+  // Reflection
+  const reflection = buildReflection();
+  document.getElementById("reflectionBlock").innerHTML = `<h3>Lectura de tu recorrido</h3>${reflection}`;
+
+  // Questions
+  const qs = buildQuestions();
+  const qDiv = document.getElementById("reflectionQuestions");
+  qs.forEach((q, i) => {
+    qDiv.innerHTML += `<div class="q-item"><span class="q-num">${i+1}</span><span class="q-text">${q}</span></div>`;
+  });
+}
+
+function buildReflection() {
+  const parts = [];
+  const highStress = S.stress > 60;
+  const goodMoney = S.money > 200000;
+  const highEdu = S.education > 30;
+  const goodHappy = S.happiness > 55;
+
+  if (highEdu && goodMoney) {
+    parts.push("<p>Tu camino combinó formación e ingresos. Eso no es fácil ni gratuito: requirió tiempo, esfuerzo y probablemente sacrificar cosas que también valían.</p>");
+  } else if (highEdu && !goodMoney) {
+    parts.push("<p>Apostaste fuerte a la formación. El retorno económico todavía no apareció, o tardó. Eso es real y frustrante, pero la formación tiene efectos que no siempre se ven en el corto plazo.</p>");
+  } else if (!highEdu && goodMoney) {
+    parts.push("<p>Construiste ingresos sin depender de títulos. Eso habla de adaptabilidad y de aprender en el camino. La pregunta que queda abierta es qué pasa si el mercado cambia.</p>");
+  } else {
+    parts.push("<p>Tu recorrido tuvo más turbulencias que estabilidad. Eso no significa que hayas tomado malas decisiones: a veces el contexto pesa más que la elección.</p>");
+  }
+
+  if (highStress) {
+    parts.push("<p>El nivel de estrés que acumulaste es alto. En la vida real eso se manifiesta en salud, relaciones, y capacidad de seguir eligiendo bien. No es un dato menor.</p>");
+  }
+
+  if (goodHappy) {
+    parts.push("<p>A pesar de todo, tu bienestar se sostuvo. Eso suele venir de alinear decisiones con valores propios, aunque no siempre sea el camino más rentable.</p>");
+  }
+
+  if (ctx === "ajustado") {
+    parts.push("<p>Arrancaste sin red de apoyo. Eso significa que cada error costó más y cada acierto requirió más. No todas las personas parten del mismo lugar, y eso es una variable real, no una excusa.</p>");
+  }
+
+  return parts.join("");
+}
+
+function buildQuestions() {
+  const qs = [
+    "¿Hubo alguna decisión del juego que te costó tomar? ¿Por qué creés que te costó?",
+    "¿Algún capítulo te recordó algo que ya viviste o que le viste vivir a alguien cercano?",
+    "Si pudieras cambiar una sola decisión de tu recorrido, ¿cuál sería y por qué?"
+  ];
+
+  if (S.stress > 60) qs.push("En tu historia, el estrés fue muy alto. ¿Qué decisiones lo generaron y qué podrías haber hecho diferente?");
+  if (S.education < 15) qs.push("En este recorrido, la formación fue baja. ¿Eso fue una elección consciente o una consecuencia de otras cosas?");
+  if (ctx === "ajustado") qs.push("Arrancaste sin red de apoyo. ¿Qué diferencias notás entre ese recorrido y el de alguien que sí la tiene?");
+
+  return qs.slice(0, 4);
+}
 </script>
 </body>
 </html>
